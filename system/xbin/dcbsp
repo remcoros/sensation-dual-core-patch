@@ -45,8 +45,9 @@ waitforwakeup() {
 	log "waitforwakeup{" ; logcpu
 	AWAKE=`cat /sys/power/wait_for_fb_wake`
 	if [ "$AWAKE" = "awake" ] ; then
-		log "Awake"
-		CPU0_FREQ_AWAKE=${CPU0_FREQ_AWAKE:=`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq`}
+		CPU0_FREQ_AWAKE=${CPU0_FREQ_AWAKE:="$CPU0_FREQ_BOOT"}
+		
+		log "Awake triggered... old awake is: $CPU0_FREQ_AWAKE"
 		
 		# CPU1 
 		log "CPU[1] try set online"
@@ -54,14 +55,12 @@ waitforwakeup() {
 		echo "1" > /sys/devices/system/cpu/cpu1/online
 		chmod 444 /sys/devices/system/cpu/cpu1/online
 		log "CPU[1] online"
-		
+				
 		if [ "$DISABLE_SLEEP" = "1" ] || [ "$OC_DAEMON" = "1" ] ; then
 			log "sleep cpu0 frequency mod disabled"
 		else
-			CPU0_FREQ_OLDAWAKE=${CPU0_FREQ_OLDAWAKE:="$CPU0_FREQ_BOOT"}
-			CPU0_FREQ_AWAKE="$CPU0_FREQ_OLDAWAKE"
-			log "waking up from earlier sleep.. set to old awake frequency = $CPU0_FREQ_OLDAWAKE"
-			echo "$CPU0_FREQ_OLDAWAKE" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
+			log "waking up from earlier sleep.. set to old awake frequency = $CPU0_FREQ_AWAKE"
+			echo "$CPU0_FREQ_AWAKE" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
 		fi
 		
 		sleep 1
@@ -79,6 +78,7 @@ waitforsleep() {
 	log "waitforsleep{" ; logcpu
 	SLEEPING=`cat /sys/power/wait_for_fb_sleep`
 	if [ "$SLEEPING" = "sleeping" ] ; then
+		log "Sleep triggered..."
 		sleep_cpu0
 		
 		log "CPU[1]: try set offline"
@@ -91,18 +91,20 @@ waitforsleep() {
 }
 
 sleep_cpu0() {
-	CPU0_FREQ_OLDAWAKE=`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq`
+	CPU0_FREQ_AWAKE=`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq`
+	log "Sleeping, remember awake frequency: $CPU0_FREQ_AWAKE"
+	
 	DISABLE_SLEEP=`cat /system/etc/dual_core/disable_sleep_freq`
 	if [ "$DISABLE_SLEEP" = "1" ] || [ "$OC_DAEMON" = "1" ] ; then
-		log "Sleeping, frequency scaledown disabled"
+		log "DISABLE_SLEEP=1 or OCD detected"
 	else
-		log "Sleeping, remember awake freq.: $CPU0_FREQ_OLDAWAKE"
 		if [ -e /system/etc/dual_core/sleep_frequency ] ; then
 			SLEEP_FREQUENCY=`cat /system/etc/dual_core/sleep_frequency`
+			log "sleep_frequency setting found, using $SLEEP_FREQUENCY instead of $CPU0_FREQ_AWAKE"
 		fi
 		SLEEP_FREQUENCY=${SLEEP_FREQUENCY:=DEFAULT_SLEEP_FREQUENCY}
 		echo "$SLEEP_FREQUENCY" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
-		log "set cpu0 freq. to $SLEEP_FREQUENCY"
+		log "Set cpu0 frequency to $SLEEP_FREQUENCY"
 	fi			
 }
 

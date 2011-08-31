@@ -21,6 +21,7 @@
 # based on original script by mike1986
 # heavily mod by remcoros
 #
+# 1.1: fix issue with cpu1 always set to boot frequency (not always the same as current cpu0)
 # 1.0: Standalone patch on github
 # 0.8: cpu1 governor lock
 # 0.7: detect oc daemon, reformat code, writable settings/log, better handle awake when 3rd party sets frequencies, extensive logging (when enabled)
