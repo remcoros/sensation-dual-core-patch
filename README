@@ -14,7 +14,7 @@
 #  - sets cpu1 offline
 #
 # To enable debugging (log to /devlog/dual_core):
-#  cat 1 > /system/etc/dual_core/debug
+#  echo 1 > /system/etc/dual_core/debug
 # 
 # based on original script by mike1986
 # heavily mod by remcoros
