@@ -1,0 +1,25 @@
+# ==============================================
+# Dual-core CPU script
+# 
+# Current behaviour:
+# - first check for existence of /system/etc/virtuous_oc/wake_max_freq
+#   if found, asume oc daemon found and exit.
+#
+# when awake:
+#  - if we wake from earlier sleep, set cpu0 to the remembered cpu0 frequency
+#  - sets cpu1 online with scaling_max_freq same as cpu0
+#
+# when sleeping:
+#  - remember current cpu0 frequency
+#  - sets cpu1 offline
+#
+# To enable debugging (log to /devlog/dual_core):
+#  cat 1 > /system/etc/dual_core/debug
+# 
+# based on original script by mike1986
+# heavily mod by remcoros
+#
+# 0.7: made into own patch (no dependency on ARHD), source on github
+# 0.6: detect oc daemon, reformat code, writable settings/log, better handle awake when 3rd party sets frequencies, extensive logging (when enabled)
+# 0.5: rewrite
+# ==============================================

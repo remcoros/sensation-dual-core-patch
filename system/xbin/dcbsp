@@ -1,0 +1,145 @@
+#!/system/bin/sh
+# ==============================================
+# Dual-core CPU script
+#
+# created by remcoros
+# based on idea from mike1986
+#
+
+readdebug() {
+	DUAL_CORE_DEBUG=`cat /system/etc/dual_core/debug`
+	DUAL_CORE_DEBUG=${DUAL_CORE_DEBUG:=0}
+}
+
+log() { 
+	if [ "$DUAL_CORE_DEBUG" = "1" ] ; then 
+		echo "$(date): $@" >> /devlog/dual_core
+	fi
+}
+
+logcpu() {
+	if [ "$DUAL_CORE_DEBUG" = "1" ] ; then 
+		local NOW_FREQ=`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq`
+		local NOW=`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq`
+		log "CPU[0]: scaling_max_freq=$NOW"
+		local NOW_ONLINE=`cat /sys/devices/system/cpu/cpu1/online`
+		log "CPU[1]: online=$NOW_ONLINE"
+		if [ -f /sys/devices/system/cpu/cpu1/cpufreq/scaling_max_freq ] ; then
+			local NOW=`cat /sys/devices/system/cpu/cpu1/cpufreq/scaling_max_freq`
+			log "CPU[1]: scaling_max_freq=$NOW"
+		fi
+	fi
+}
+
+init_dc_fs() {
+	# init
+	sysrw
+	touch /devlog/dual_core ; chmod 777 /devlog/dual_core
+	touch /system/etc/dual_core/debug ; chmod 777 /system/etc/dual_core/debug
+	touch /system/etc/dual_core/sleep_frequency ; chmod 777 /system/etc/dual_core/sleep_frequency
+	touch /system/etc/dual_core/disable_sleep_freq ; chmod 777 /system/etc/dual_core/disable_sleep_freq
+	sysro
+}
+
+waitforwakeup() {
+	log "waitforwakeup{" ; logcpu
+	AWAKE=`cat /sys/power/wait_for_fb_wake`
+	if [ "$AWAKE" = "awake" ] ; then
+		log "Awake"
+		CPU0_FREQ_AWAKE=${CPU0_FREQ_AWAKE:=`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq`}
+		
+		# CPU1 
+		log "CPU[1] try set online"
+		chmod 644 /sys/devices/system/cpu/cpu1/online
+		echo "1" > /sys/devices/system/cpu/cpu1/online
+		chmod 444 /sys/devices/system/cpu/cpu1/online
+		log "CPU[1] online"
+		
+		if [ "$DISABLE_SLEEP" = "1" ] || [ "$OC_DAEMON" = "1" ] ; then
+			log "sleep cpu0 frequency mod disabled"
+		else
+			CPU0_FREQ_OLDAWAKE=${CPU0_FREQ_OLDAWAKE:="$CPU0_FREQ_BOOT"}
+			CPU0_FREQ_AWAKE="$CPU0_FREQ_OLDAWAKE"
+			log "waking up from earlier sleep.. set to old awake frequency = $CPU0_FREQ_OLDAWAKE"
+			echo "$CPU0_FREQ_OLDAWAKE" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
+		fi
+		
+		sleep 1
+		echo "$CPU0_FREQ_AWAKE" > /sys/devices/system/cpu/cpu1/cpufreq/scaling_max_freq
+		
+		log "}wakeup" ; logcpu
+	fi
+}
+
+waitforsleep() {
+	log "waitforsleep{" ; logcpu
+	SLEEPING=`cat /sys/power/wait_for_fb_sleep`
+	if [ "$SLEEPING" = "sleeping" ] ; then
+		sleep_cpu0
+		
+		log "CPU[1]: try set offline"
+		chmod 644 /sys/devices/system/cpu/cpu1/online
+		echo "0" > /sys/devices/system/cpu/cpu1/online
+		chmod 444 /sys/devices/system/cpu/cpu1/online
+		log "CPU[1]: offline"
+	fi
+	log "}waitforsleep" ; logcpu
+}
+
+sleep_cpu0() {
+	CPU0_FREQ_OLDAWAKE=`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq`
+	DISABLE_SLEEP=`cat /system/etc/dual_core/disable_sleep_freq`
+	if [ "$DISABLE_SLEEP" = "1" ] || [ "$OC_DAEMON" = "1" ] ; then
+		log "Sleeping, frequency scaledown disabled"
+	else
+		log "Sleeping, remember awake freq.: $CPU0_FREQ_OLDAWAKE"
+		if [ -e /system/etc/dual_core/sleep_frequency ] ; then
+			SLEEP_FREQUENCY=`cat /system/etc/dual_core/sleep_frequency`
+		fi
+		SLEEP_FREQUENCY=${SLEEP_FREQUENCY:=DEFAULT_SLEEP_FREQUENCY}
+		echo "$SLEEP_FREQUENCY" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
+		log "set cpu0 freq. to $SLEEP_FREQUENCY"
+	fi			
+}
+
+#
+# script starts here
+#
+
+DEFAULT_SLEEP_FREQUENCY=384000
+
+# touch/chmod some files
+init_dc_fs
+
+DUAL_CORE_DEBUG="1"
+log "Starting...";  logcpu
+
+# check if OC Daemon is running
+if [ -f /system/etc/virtuous_oc/wake_max_freq ] ; then	
+	OC_DAEMON=1
+	log "OC Daemon found."
+fi
+
+DISABLE_SLEEP=`cat /system/etc/dual_core/disable_sleep_freq`	
+CPU0_FREQ_BOOT=`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq`
+
+STATE=`cat /sys/power/state_onchg`	
+if [ "$STATE" = "chgoff" ] ; then
+	log "device is asleep, scaling down"
+	sleep_cpu0
+fi
+
+DUAL_CORE_DEBUG="0"
+
+# loop while waiting for sleep/awake
+(while : ; do
+	waitforwakeup
+	
+	# reset debug vars, this can be removed. but then you have to reboot/restart to enable debug log
+	readdebug
+	
+	waitforsleep
+
+	# reset debug vars, this can be removed. but then you have to reboot/restart to enable debug log
+	readdebug
+done &)
