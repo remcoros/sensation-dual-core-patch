@@ -1,6 +1,8 @@
 # ==============================================
 # Dual-core CPU script
 # 
+# https://github.com/remcoros/sensation-dual-core-patch
+# 
 # Current behaviour:
 # - first check for existence of /system/etc/virtuous_oc/wake_max_freq
 #   if found, asume oc daemon found and exit.
@@ -19,7 +21,9 @@
 # based on original script by mike1986
 # heavily mod by remcoros
 #
-# 0.7: made into own patch (no dependency on ARHD), source on github
-# 0.6: detect oc daemon, reformat code, writable settings/log, better handle awake when 3rd party sets frequencies, extensive logging (when enabled)
-# 0.5: rewrite
+# 0.9: cpu1 governor lock
+# 0.8: Standalone patch on github
+# 0.7: detect oc daemon, reformat code, writable settings/log, better handle awake when 3rd party sets frequencies, extensive logging (when enabled)
+# 0.6: rewrite
+# 0.5: mike1986's script
 # ==============================================
