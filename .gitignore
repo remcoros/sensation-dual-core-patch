@@ -2,3 +2,5 @@ key
 package
 tools
 build.bat
+/build_and_pause.bat
+/src/system/xbin/dcbsp.nodebug

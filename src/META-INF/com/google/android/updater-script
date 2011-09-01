@@ -13,4 +13,5 @@ set_perm(0, 0, 0777, "/system/xbin/dcbsp");
 ui_print("unmount /system");
 unmount("/system");
 show_progress(1, 0);
-ui_print("Complete");
+ui_print("Complete. wait a few seconds so you can read this.");
+run_program("/sbin/sleep", "5");

@@ -6,6 +6,7 @@
 # based on idea from mike1986
 #
 
+#ifdef debug
 readdebug() {
 	DUAL_CORE_DEBUG=`cat /system/etc/dual_core/debug`
 	DUAL_CORE_DEBUG=${DUAL_CORE_DEBUG:=0}
@@ -30,6 +31,7 @@ logcpu() {
 		fi
 	fi
 }
+#endif
 
 init_dc_fs() {
 	# init
@@ -57,13 +59,13 @@ waitforwakeup() {
 		log "CPU[1] online"
 				
 		if [ "$DISABLE_SLEEP" = "1" ] || [ "$OC_DAEMON" = "1" ] ; then
-			log "sleep cpu0 frequency mod disabled"
+			log "DISABLE_SLEEP=1 or OCD detected"
 		else
 			log "waking up from earlier sleep.. set to old awake frequency = $CPU0_FREQ_AWAKE"
 			echo "$CPU0_FREQ_AWAKE" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
 		fi
 		
-		sleep 1
+		# sleep 1
 		echo "$CPU0_FREQ_AWAKE" > /sys/devices/system/cpu/cpu1/cpufreq/scaling_max_freq
 		
 		chmod 644 /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor
@@ -117,7 +119,7 @@ DEFAULT_SLEEP_FREQUENCY=384000
 # touch/chmod some files
 init_dc_fs
 
-DUAL_CORE_DEBUG="1"
+DUAL_CORE_DEBUG="1" #debug
 log "Starting...";  logcpu
 
 # check if OC Daemon is running
@@ -135,17 +137,17 @@ if [ "$STATE" = "chgoff" ] ; then
 	sleep_cpu0
 fi
 
-DUAL_CORE_DEBUG="0"
+DUAL_CORE_DEBUG="0" #debug
 
 # loop while waiting for sleep/awake
 (while : ; do
 	waitforwakeup
 	
-	# reset debug vars, this can be removed. but then you have to reboot/restart to enable debug log
-	readdebug
+	# reset debug vars, this can be removed. but then you have to reboot/restart to enable debug log #debug
+	readdebug #debug
 	
 	waitforsleep
 
-	# reset debug vars, this can be removed. but then you have to reboot/restart to enable debug log
-	readdebug
+	# reset debug vars, this can be removed. but then you have to reboot/restart to enable debug log #debug
+	readdebug #debug
 done &)
