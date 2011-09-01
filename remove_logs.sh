@@ -13,10 +13,15 @@ do
 	if [ "$line" = "$T" ] ;then
 		FLAG=1
 		FOUND=1
-	elif [[ "$line" =~ "log \"" ]] ;then
-		# "$(echo $line |awk '{print $1}' )" = "log " ] ;then
+	elif [[ $line == "" ]] ;then
 		DUMMY=0
-	elif [[ "$line" =~ "#debug" ]] ;then
+	elif [[ $line == "#" ]] ;then
+		DUMMY=0
+	elif [[ $line == "# "* ]] ;then
+		DUMMY=0
+	elif [[ $line == "log "* ]] ;then
+		DUMMY=0
+	elif [[ "$line" == *#debug* ]] ;then
 		DUMMY=0
 	elif [ "$line" = "#endif" ] && [ $FOUND -eq 1 ] ;then
 		FLAG=0
