@@ -21,6 +21,7 @@
 # based on original script by mike1986
 # heavily mod by remcoros
 #
+# 1.2: added /system/xbin/dcbsp-control Use this to view settings. enable/disable debug, view log, etc.
 # 1.1: fix issue with cpu1 always set to boot frequency (not always the same as current cpu0)
 # 1.0: Standalone patch on github
 # 0.8: cpu1 governor lock

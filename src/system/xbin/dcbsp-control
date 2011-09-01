@@ -1,0 +1,104 @@
+#!/system/bin/sh
+## ==============================================
+## Dual-core CPU script
+##
+## This is a controller script for the dcbsp daemon
+##
+## created by remcoros
+## based on idea from mike1986
+##
+
+LOGO=" +++ Dual-core CPU patch - control script +++"
+option1="1) Display current settings";
+option2="2) Enable debug";
+option3="3) Disable debug";
+option4="4) Reset CPU[0] scaling_max_freq to 1188000";
+option5="5) View last 50 lines of /devlog/dual_core";
+
+do_option1 () { display_stats ; }
+do_option2 () { sysrw; echo 1 > /system/etc/dual_core/debug ; sysro ; MSG=Debug enabled, logging to /devlog/dual_core ; }
+do_option3 () { sysrw; echo 0 > /system/etc/dual_core/debug ; sysro ; MSG=Debug disabled ; }
+do_option4 () { echo 1188000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq ; MSG=CPU[0] scaling_max_freq has been reset to 1188000 ; }
+do_option5 () { tail -50 /devlog/dual_core ; }
+
+display() {
+	echo "$@"
+}
+
+badchoice () { MSG="Bad choice... Try again" ; } 
+ 
+display_stats() {
+	cpu0_scaling_governor=`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor`
+	cpu0_scaling_max_freq=`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq`
+	
+	display "Current settings:"
+	display " CPU[0] scaling_governor=$cpu0_scaling_governor"
+	display " CPU[0] scaling_max_freq=$cpu0_scaling_max_freq"
+	
+	cpu1_online=`cat /sys/devices/system/cpu/cpu1/online`
+	if [ cpu1_online = "1" ] ; then
+		cpu1_scaling_governor=`cat /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor`
+		cpu1_scaling_max_freq=`cat /sys/devices/system/cpu/cpu1/cpufreq/scaling_max_freq`
+		display " CPU[1] online"
+		display " CPU[1] scaling_governor=$cpu1_scaling_governor"
+		display " CPU[1] scaling_max_freq=$cpu1_scaling_max_freq"
+	else
+		display " CPU[1] offline"
+	fi
+	
+	if [ -f /system/etc/virtuous_oc/wake_max_freq ] ; then	
+		display " DCBSP: OC Daemon found."
+	fi
+
+	debug=`cat /system/etc/dual_core/debug`
+	if [ "$debug" != "1" ] ; then
+		debug="(not set)"
+	fi
+	
+	display " DCBSP: debug=$debug"
+	
+	disable_sleep_freq=`cat /system/etc/dual_core/disable_sleep_freq`
+	if [ "$disable_sleep_freq" != "1" ] ; then
+		disable_sleep_freq="(not set)"
+	fi
+	display " DCBSP: disable_sleep_freq=$disable_sleep_freq"
+}
+
+themenu () {
+	display `date`
+	display
+	display -e $LOGO
+	display
+	display_stats
+	display
+	display -e "Choose option:"
+	display
+	display -e "\t" $option1
+	display -e "\t" $option2
+	display -e "\t" $option3
+	display -e "\t" $option4
+	display -e "\t" $option5
+	display -e "\t x) Exit"
+	echo
+	echo $MSG
+	echo
+	echo -n "Choose a number or 'x': "
+}
+
+MSG=
+
+while true
+do
+	themenu
+	read option
+	MSG=
+	case $option in
+		1) do_option1;;
+		2) do_option2;;
+		3) do_option3;;
+		4) do_option4;;
+		5) do_option5;;
+		x|X) break;;
+		*) badchoice ;;
+	esac
+done

@@ -19,6 +19,7 @@ ui_print("extract patch");
 ui_print("setting permissions");
 	set_perm(0, 0, 0777, "/system/etc/init.d/80dcbsp");
 	set_perm(0, 0, 0777, "/system/xbin/dcbsp");
+	set_perm(0, 0, 0777, "/system/xbin/dcbsp-control");
 
 ui_print("unmount /system");
 	unmount("/system");
