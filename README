@@ -1,5 +1,5 @@
 # ==============================================
-# Dual-core CPU script
+# Dual-core & some battery save CPU script
 # 
 # https://github.com/remcoros/sensation-dual-core-patch
 # 
@@ -9,7 +9,7 @@
 #
 # when awake:
 #  - if we wake from earlier sleep, set cpu0 to the remembered cpu0 frequency
-#  - sets cpu1 online with scaling_max_freq same as cpu0
+#  - sets cpu1 online with scaling_max_freq same as cpu0, enforcing governor ondemand
 #
 # when sleeping:
 #  - remember current cpu0 frequency
@@ -18,9 +18,14 @@
 # To enable debugging (log to /devlog/dual_core):
 #  echo 1 > /system/etc/dual_core/debug
 # 
-# based on original script by mike1986
+# use dcbsp-control to see some stats and enable/disable debug.
+#
+# note, this should all be temporary. I think the kernel should handle all this properly.
+#
+# based on original script by mike1986 (http://forum.xda-developers.com/showthread.php?t=1098849)
 # heavily mod by remcoros
 #
+# 
 # 1.2: added /system/xbin/dcbsp-control Use this to view settings. enable/disable debug, view log, etc.
 # 1.1: fix issue with cpu1 always set to boot frequency (not always the same as current cpu0)
 # 1.0: Standalone patch on github
