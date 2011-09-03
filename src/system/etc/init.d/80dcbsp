@@ -1,8 +1,0 @@
-!/system/bin/sh
-# ==============================================
-# Dual-core CPU script
-#
-# created by remcoros
-# based on idea from mike1986
-#
-/system/xbin/dcbsp

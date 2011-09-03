@@ -2,9 +2,9 @@
 #FILE=$1
 #TAG=$2
 #TARGET=$3
-FILE=src/system/xbin/dcbsp
+FILE=src/system/etc/dual_core/mainscript
 TAG=debug
-TARGET=src/system/xbin/dcbsp.nodebug
+TARGET=src/system/etc/dual_core/mainscript.nodebug
 FLAG=0 
 FOUND=0
 T="#ifdef $TAG"
